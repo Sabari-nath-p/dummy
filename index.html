@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <nav class="bg-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 py-6">
+                <h1 class="text-3xl font-bold text-gray-800">
+                    <i class="fas fa-certificate mr-2"></i>
+                    Certificate Management System
+                </h1>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+            <!-- Search Section -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">
+                    <i class="fas fa-search mr-2"></i>
+                    Search Certificate
+                </h2>
+                <div class="flex gap-4">
+                    <input type="text" id="searchPhone" placeholder="Enter Phone Number"
+                        class="flex-1 p-2 border rounded-md" onkeypress="if(event.key === 'Enter') searchCertificate()">
+                    <button onclick="searchCertificate()"
+                        class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+                        <i class="fas fa-search mr-2"></i>
+                        Search
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Results -->
+            <div id="searchResults" class="bg-white rounded-lg shadow-md p-6 hidden">
+                <h2 class="text-xl font-semibold mb-4">
+                    <i class="fas fa-list mr-2"></i>
+                    Search Results
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Name</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Phone</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Department</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Event</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Date</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="certificatesList" class="bg-white divide-y divide-gray-200">
+                            <!-- Search results will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Form Section -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">
+                    <i class="fas fa-file-alt mr-2"></i>
+                    Certificate Details
+                </h2>
+                <form id="certificateForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Date</label>
+                        <div class="relative">
+                            <i class="fas fa-calendar absolute left-3 top-3 text-gray-400"></i>
+                            <input type="text" id="date" placeholder="DD/MM/YY" required
+                                class="mt-1 p-2 pl-10 w-full border rounded-md">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Department</label>
+                        <div class="relative">
+                            <i class="fas fa-building absolute left-3 top-3 text-gray-400"></i>
+                            <select id="dept" required class="mt-1 p-2 pl-10 w-full border rounded-md">
+                                <option value="">Select Department</option>
+                                <option value="CE">CE</option>
+                                <option value="ME">ME</option>
+                                <option value="ECE">ECE</option>
+                                <option value="EEE">EEE</option>
+                                <option value="CSE">CSE</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute left-3 top-3 text-gray-400"></i>
+                            <input type="email" id="email" placeholder="Email" required
+                                class="mt-1 p-2 pl-10 w-full border rounded-md">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Event</label>
+                        <div class="relative">
+                            <i class="fas fa-star absolute left-3 top-3 text-gray-400"></i>
+                            <input type="text" id="event" placeholder="Event Name" required
+                                class="mt-1 p-2 pl-10 w-full border rounded-md">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Name</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
+                            <input type="text" id="name" placeholder="Full Name" required
+                                class="mt-1 p-2 pl-10 w-full border rounded-md">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Phone</label>
+                        <div class="relative">
+                            <i class="fas fa-phone absolute left-3 top-3 text-gray-400"></i>
+                            <input type="tel" id="phone" placeholder="Phone Number" required pattern="[0-9]{10}"
+                                class="mt-1 p-2 pl-10 w-full border rounded-md">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">PRP</label>
+                        <div class="relative">
+                            <i class="fas fa-id-card absolute left-3 top-3 text-gray-400"></i>
+                            <input type="text" id="prp" placeholder="PRP Number" required
+                                pattern="PRP[0-9]{2}[A-Z]{2}[0-9]{3}" class="mt-1 p-2 pl-10 w-full border rounded-md">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Type</label>
+                        <div class="relative">
+                            <i class="fas fa-tag absolute left-3 top-3 text-gray-400"></i>
+                            <select id="type" required class="mt-1 p-2 pl-10 w-full border rounded-md">
+                                <option value="">Select Type</option>
+                                <option value="COM">COM</option>
+                                <option value="TECH">TECH</option>
+                                <option value="SOFT">SOFT</option>
+                                <option value="OTHER">OTHER</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+                <div class="mt-6 flex gap-4">
+                    <button onclick="createCertificate()"
+                        class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">
+                        <i class="fas fa-plus mr-2"></i>
+                        Create
+                    </button>
+                    <button onclick="updateCertificate()"
+                        class="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600">
+                        <i class="fas fa-edit mr-2"></i>
+                        Update
+                    </button>
+                    <button onclick="clearForm()" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Excel Import Section -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">
+                    <i class="fas fa-file-excel mr-2"></i>
+                    Import from Excel
+                </h2>
+                <div class="flex gap-4">
+                    <input type="file" id="excelFile" accept=".xlsx, .xls" class="flex-1 p-2 border rounded-md">
+                    <button onclick="importExcel()"
+                        class="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600">
+                        <i class="fas fa-upload mr-2"></i>
+                        Import
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCHfG2Boxz1b8TVCabnNnuT7QipXbCgKhc",
+            authDomain: "certificate-e3dc9.firebaseapp.com",
+            projectId: "certificate-e3dc9",
+            storageBucket: "certificate-e3dc9.firebasestorage.app",
+            messagingSenderId: "1081358752195",
+            appId: "1:1081358752195:web:3d441439be279948a34576",
+            measurementId: "G-M35XNQT6PE"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Display search results
+        function displaySearchResults(docs) {
+            const certificatesList = document.getElementById('certificatesList');
+            const searchResults = document.getElementById('searchResults');
+
+            certificatesList.innerHTML = '';
+            searchResults.classList.remove('hidden');
+
+            docs.forEach((doc) => {
+                const data = doc.data();
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${data.NAME}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${data.PHONE}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${data.DEPT}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${data.EVENT}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${data.DATE}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="editCertificateById('${doc.id}')" 
+                                class="text-indigo-600 hover:text-indigo-900 mr-4">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button onclick="deleteCertificateById('${doc.id}')" 
+                                class="text-red-600 hover:text-red-900">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </td>
+                `;
+                certificatesList.appendChild(row);
+            });
+        }
+
+        // Search certificate by phone
+        async function searchCertificate() {
+            const phone = document.getElementById('searchPhone').value;
+            if (!phone) {
+                alert('Please enter a phone number to search');
+                return;
+            }
+            try {
+                const querySnapshot = await db.collection('certificate')
+                    .where('PHONE', '==', Number(phone))
+                    .get();
+
+                if (!querySnapshot.empty) {
+                    displaySearchResults(querySnapshot.docs);
+                    const data = querySnapshot.docs[0].data();
+                    fillForm(data);
+                    document.getElementById('searchResults').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert('No certificate found with this phone number');
+                    document.getElementById('searchResults').classList.add('hidden');
+                    clearForm();
+                }
+            } catch (error) {
+                console.error("Error searching certificate: ", error);
+                alert('Error searching certificate');
+            }
+        }
+
+        // Fill form with data
+        function fillForm(data) {
+            document.getElementById('date').value = data.DATE;
+            document.getElementById('dept').value = data.DEPT;
+            document.getElementById('email').value = data.EMAIL;
+            document.getElementById('event').value = data.EVENT;
+            document.getElementById('name').value = data.NAME;
+            document.getElementById('phone').value = data.PHONE;
+            document.getElementById('prp').value = data.PRP;
+            document.getElementById('type').value = data.TYPE;
+        }
+
+        // Edit certificate by ID
+        async function editCertificateById(docId) {
+            try {
+                const doc = await db.collection('certificate').doc(docId).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    fillForm(data);
+                    document.getElementById('certificateForm').scrollIntoView({ behavior: 'smooth' });
+                }
+            } catch (error) {
+                console.error("Error loading certificate for edit:", error);
+                alert('Error loading certificate for edit');
+            }
+        }
+
+        // Delete certificate by ID
+        async function deleteCertificateById(docId) {
+            if (confirm('Are you sure you want to delete this certificate?')) {
+                try {
+                    await db.collection('certificate').doc(docId).delete();
+                    alert('Certificate deleted successfully');
+                    document.getElementById('searchResults').classList.add('hidden');
+                    clearForm();
+                } catch (error) {
+                    console.error("Error deleting certificate:", error);
+                    alert('Error deleting certificate');
+                }
+            }
+        }
+
+        // Create new certificate
+        async function createCertificate() {
+            if (!validateForm()) {
+                return;
+            }
+            const data = getFormData();
+            try {
+                await db.collection('certificate').add(data);
+                alert('Certificate created successfully');
+                clearForm();
+                // Search for the newly created certificate
+                document.getElementById('searchPhone').value = data.PHONE;
+                searchCertificate();
+            } catch (error) {
+                console.error("Error creating certificate: ", error);
+                alert('Error creating certificate');
+            }
+        }
+
+        // Update certificate
+        async function updateCertificate() {
+            if (!validateForm()) {
+                return;
+            }
+            const phone = document.getElementById('phone').value;
+            const data = getFormData();
+            try {
+                const querySnapshot = await db.collection('certificate')
+                    .where('PHONE', '==', Number(phone))
+                    .get();
+
+                if (!querySnapshot.empty) {
+                    await querySnapshot.docs[0].ref.update(data);
+                    alert('Certificate updated successfully');
+                    // Refresh the search results
+                    searchCertificate();
+                } else {
+                    alert('No certificate found to update');
+                }
+            } catch (error) {
+                console.error("Error updating certificate: ", error);
+                alert('Error updating certificate');
+            }
+        }
+
+        // Get form data
+        function getFormData() {
+            return {
+                DATE: document.getElementById('date').value,
+                DEPT: document.getElementById('dept').value,
+                EMAIL: document.getElementById('email').value,
+                EVENT: document.getElementById('event').value,
+                NAME: document.getElementById('name').value,
+                PHONE: Number(document.getElementById('phone').value),
+                PRP: document.getElementById('prp').value,
+                TYPE: document.getElementById('type').value
+            };
+        }
+
+        // Validate form
+        function validateForm() {
+            const form = document.getElementById('certificateForm');
+            const phone = document.getElementById('phone').value;
+            const prp = document.getElementById('prp').value;
+            const email = document.getElementById('email').value;
+            const date = document.getElementById('date').value;
+
+            // Check required fields
+            if (!form.checkValidity()) {
+                alert('Please fill in all required fields');
+                return false;
+            }
+
+            // Validate phone number
+            if (!/^\d{10}$/.test(phone)) {
+                alert('Please enter a valid 10-digit phone number');
+                return false;
+            }
+
+            // Validate PRP format
+            if (!/^PRP\d{2}[A-Z]{2}\d{3}$/.test(prp)) {
+                alert('Please enter a valid PRP number (e.g., PRP21CS061)');
+                return false;
+            }
+
+            // Validate email
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert('Please enter a valid email address');
+                return false;
+            }
+
+            // Validate date format (DD/MM/YY)
+            if (!/^\d{2}\/\d{2}\/\d{2}$/.test(date)) {
+                alert('Please enter a valid date in DD/MM/YY format');
+                return false;
+            }
+
+            return true;
+        }
+
+        // Clear form and search results
+        function clearForm() {
+            document.getElementById('certificateForm').reset();
+            document.getElementById('searchPhone').value = '';
+            document.getElementById('searchResults').classList.add('hidden');
+        }
+
+        // Import from Excel
+        async function importExcel() {
+            const file = document.getElementById('excelFile').files[0];
+            if (!file) {
+                alert('Please select an Excel file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+                try {
+                    const batch = db.batch();
+                    let successCount = 0;
+                    let errorCount = 0;
+
+                    for (const row of jsonData) {
+                        try {
+                            // Validate the phone number format
+                            if (!row.PHONE || !/^\d{10}$/.test(row.PHONE.toString())) {
+                                errorCount++;
+                                console.error('Invalid phone number:', row);
+                                continue;
+                            }
+
+                            const docRef = db.collection('certificate').doc();
+                            batch.set(docRef, {
+                                DATE: row.DATE || '',
+                                DEPT: row.DEPT || '',
+                                EMAIL: row.EMAIL || '',
+                                EVENT: row.EVENT || '',
+                                NAME: row.NAME || '',
+                                PHONE: Number(row.PHONE),
+                                PRP: row.PRP || '',
+                                TYPE: row.TYPE || ''
+                            });
+                            successCount++;
+                        } catch (err) {
+                            errorCount++;
+                            console.error(`Error processing row:`, row, err);
+                        }
+                    }
+
+                    await batch.commit();
+                    alert(`Import completed:\n${successCount} records imported successfully\n${errorCount} records failed`);
+                    document.getElementById('excelFile').value = ''; // Clear file input
+                } catch (error) {
+                    console.error("Error importing Excel data: ", error);
+                    alert('Error importing Excel data');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Add event listener for Enter key in search field
+        document.getElementById('searchPhone').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                searchCertificate();
+            }
+        });
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('searchResults').classList.add('hidden');
+        });
+    </script>
+</body>
+
+</html>
